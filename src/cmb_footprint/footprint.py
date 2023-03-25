@@ -110,6 +110,7 @@ class SurveyStack(object):
         # H.graticule(dpar=30.0, dmer=30.0, coord='C', verbose=False)
         
     def superimpose_hpxmap(self, hpx_map, label, color='red', coord_in='C',
+                           alpha=None, 
                            cbar=True):
         '''Superimpose a Healpix map on the background map.
 
@@ -124,7 +125,7 @@ class SurveyStack(object):
         color : string or array-like with shape (3,)
             The color to use when overlaying the survey footprint. Either a
             string or rgb triplet.
-
+        alpha: float=None
         coord_in : 'C', 'G', or 'E'
             The coordinate system of the input healpix map.
 
@@ -160,7 +161,8 @@ class SurveyStack(object):
         else:
             self.mapview(hpx_map, title='', coord=coord,
                          cbar=True, fig=self.fig.number, cmap=cm1,
-                         notext=True, flip='astro', **self.kwds)
+                         notext=True, flip='astro', 
+                         alpha=alpha, **self.kwds)
         self.fig.delaxes(self.fig.axes[-1])
 
         if cbar:
@@ -168,6 +170,8 @@ class SurveyStack(object):
             im0 = self.fig.axes[-1].get_images()[0]
             box = self.fig.axes[0].get_position()
             ax_color = pl.axes([len(self.cbs), box.y0-0.1, 0.05, 0.05])
+            if isinstance(im0._alpha, np.ndarray):
+                im0._alpha = im0._alpha.max()
             self.fig.colorbar(im0, cax=ax_color, orientation='horizontal',
                               label=label, values=[1, 1])
 
@@ -298,7 +302,7 @@ class SurveyStack(object):
                                 coord_in=coord_in)
 
     def superimpose_survey(self, survey_name, color='red',
-                           label=None, cbar=True):
+                           label=None, cbar=True, alpha=None):
         '''Superimpose a specific survey whose Healpix footprints we have
         pregenerated and are listed in the configuration file
 
@@ -322,9 +326,10 @@ class SurveyStack(object):
 
         if label is None:
             label = survey_name
-
+        if alpha is not None:
+            alpha = np.full_like(hpx_map, alpha)
         self.superimpose_hpxmap(hpx_map, label, color=color,
-                                coord_in=coord, cbar=cbar)
+                                coord_in=coord, cbar=cbar, alpha=alpha)
 
     def superimpose_survey_outline(self, survey_name, color='red',
                                    label=None, cbar=True):
