@@ -18,7 +18,7 @@ import numpy as np
 import pylab as pl
 import healpy as H
 import matplotlib.cm as cm
-
+from . import get_data_path
 from . import visufunc_ext as vf
 from . import util as util
 from .config_handler import ConfigHandler
@@ -33,7 +33,7 @@ class SurveyStack(object):
 
     def __init__(self, background, nside=None, fignum=None,
                  projection='mollweide', coord_bg='G', coord_plot='C',
-                 partialmap=False, config='footprint.cfg',
+                 partialmap=False, config=None,
                  map_path=None, download_config=False,
                  title='Survey Footprints', cbar=None, min=1.0,
                  max=5000.0, log=True, unit='', **kwds):
@@ -59,17 +59,19 @@ class SurveyStack(object):
             self.mapcontour = vf.gnomcontour
 
         if map_path is None:
-            full_path = inspect.getfile(inspect.currentframe())
-            abs_path = os.path.split(full_path)[0]
-            map_path = os.path.join(abs_path, 'maps/')
-
+            map_path = get_data_path('maps/')
+        if config is None:
+            config = get_data_path('footprint.cfg')
+        else:
+            if ~os.path.exists(config):
+                raise FileNotFoundError(f"Not finding: {config}")
+        
         self.config = ConfigHandler(config, map_path, nside=nside,
                                     download_config=download_config)
-
+        
         # Could also just call load_survey which will call get_background
         if isinstance(background, str):
-            bgmap, coord_bg, unit2 = self.config.load_survey(background,
-                                                             get_unit=True)
+            bgmap, coord_bg, unit2 = self.config.load_survey(background, get_unit=True)
             background = bgmap[0]
             if unit2 is not None:
                 unit = unit2
@@ -105,8 +107,8 @@ class SurveyStack(object):
             if not cbar:
                 self.fig.delaxes(self.fig.axes[-1])
 
-        H.graticule(dpar=30.0, dmer=30.0, coord='C', verbose=False)
-
+        # H.graticule(dpar=30.0, dmer=30.0, coord='C', verbose=False)
+        
     def superimpose_hpxmap(self, hpx_map, label, color='red', coord_in='C',
                            cbar=True):
         '''Superimpose a Healpix map on the background map.

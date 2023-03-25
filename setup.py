@@ -4,8 +4,11 @@ setup(name='cmb_footprint',
       version='1.0',
       description='Visualize sky survey regions.',
       author='N. Miller, and [others]',
-      package_dir = {'cmb_footprint' : 'src'},
-      packages=['cmb_footprint'],
+      packages=find_packages(where="src"),
+      package_dir={"": "src"},
+      package_data={
+        "cmb_footprint": ["*.cfg", "data/*.cfg", "data/maps/*"]
+      },
       python_requires=">=3.7",
       install_requires=[
         "numpy>=1.21", # for npt.NDArray

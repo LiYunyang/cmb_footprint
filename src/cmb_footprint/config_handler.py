@@ -35,7 +35,6 @@ class ConfigHandler(object):
                  check=True):
         self.config_fn = config_fn
         self.map_path = map_path
-
         if nside is None:
             nside = 256
 
