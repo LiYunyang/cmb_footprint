@@ -19,9 +19,10 @@ import pylab as pl
 import healpy as H
 import matplotlib.cm as cm
 
-import cmb_footprint.visufunc_ext as vf
-import cmb_footprint.util as util
-from cmb_footprint.config_handler import ConfigHandler
+from . import visufunc_ext as vf
+from . import util as util
+from .config_handler import ConfigHandler
+
 
 
 class SurveyStack(object):
