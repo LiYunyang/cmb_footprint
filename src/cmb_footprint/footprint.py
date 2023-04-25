@@ -17,6 +17,7 @@ import inspect
 import numpy as np
 import pylab as pl
 import healpy as H
+import matplotlib
 import matplotlib.cm as cm
 from . import get_data_path
 from . import visufunc_ext as vf
@@ -36,12 +37,15 @@ class SurveyStack(object):
                  partialmap=False, config=None,
                  map_path=None, download_config=False,
                  title='Survey Footprints', cbar=None, min=1.0,
-                 max=5000.0, log=True, unit='', **kwds):
+                 fontsize=10, labelpad=0,
+                 max=5000.0, log=True, unit='', **kwds, ):
 
         self.fig = pl.figure(fignum)
+        
         self.coord_plot = coord_plot
         self.partialmap = partialmap
-
+        self.fontsize = fontsize
+        self.labelpad = labelpad
         self.kwds = kwds
         self.cbs = []
 
@@ -171,10 +175,15 @@ class SurveyStack(object):
             box = self.fig.axes[0].get_position()
             ax_color = pl.axes([len(self.cbs), box.y0-0.1, 0.05, 0.05])
             if isinstance(im0._alpha, np.ndarray):
-                im0._alpha = im0._alpha.max()
-            self.fig.colorbar(im0, cax=ax_color, orientation='horizontal',
-                              label=label, values=[1, 1])
-
+                im0._alpha = im0._alpha.max()            
+            else:
+                im0._alpha = 1
+            cbar = self.fig.colorbar(im0, cax=ax_color, orientation='horizontal',
+                              label=label, 
+                              norm=matplotlib.colors.Normalize(vmin=1, vmax=1)
+                              )
+            cbar.set_label(label=label, fontsize=self.fontsize, labelpad=-self.labelpad)
+            ax_color.set_xticks([])
             self.cbs.append(ax_color)
 
             # Read just the location of every colorbar
@@ -490,9 +499,13 @@ class SurveyStack(object):
             im0 = self.fig.axes[-1].get_images()[0]
             box = self.fig.axes[0].get_position()
             ax_color = pl.axes([len(self.cbs), box.y0-0.1, 0.05, 0.05])
-            self.fig.colorbar(im0, cax=ax_color, orientation='horizontal',
-                              label=label, values=[1, 1])
-
+            im0._alpha = 1
+            cbar = self.fig.colorbar(im0, cax=ax_color, orientation='horizontal',
+                              label=label, 
+                              norm=matplotlib.colors.Normalize(vmin=1, vmax=1)
+                              )
+            cbar.set_label(label=label, fontsize=self.fontsize, labelpad=-self.labelpad)
+            ax_color.set_xticks([])
             self.cbs.append(ax_color)
 
             self.fig.delaxes(self.fig.axes[-2])
@@ -581,9 +594,12 @@ class SurveyStack(object):
             im0 = self.fig.axes[-1].get_images()[0]
             box = self.fig.axes[0].get_position()
             ax_color = pl.axes([len(self.cbs), box.y0-0.1, 0.05, 0.05])
-            self.fig.colorbar(im0, cax=ax_color, orientation='horizontal',
-                              label=label, values=[1, 1])
-
+            im0._alpha = 1
+            cbar = self.fig.colorbar(im0, cax=ax_color, orientation='horizontal',  
+                              norm=matplotlib.colors.Normalize(vmin=1, vmax=1)
+                              )
+            cbar.set_label(label=label, fontsize=self.fontsize, labelpad=-self.labelpad)
+            ax_color.set_xticks([])
             self.cbs.append(ax_color)
 
             # Delete the temporary map
