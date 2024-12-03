@@ -12,7 +12,7 @@ setup(name='cmb_footprint',
       python_requires=">=3.7",
       install_requires=[
         "numpy>=1.21", # for npt.NDArray
-        "astropy>='3.2.0",
+        "astropy>=3.2.0",
         "matplotlib",
         "scipy",
         "healpy",
