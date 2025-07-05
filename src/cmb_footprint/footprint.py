@@ -174,16 +174,19 @@ class SurveyStack(object):
             im0 = self.fig.axes[-1].get_images()[0]
             box = self.fig.axes[0].get_position()
             ax_color = pl.axes([len(self.cbs), box.y0-0.1, 0.05, 0.05])
+
             if isinstance(im0._alpha, np.ndarray):
                 im0._alpha = im0._alpha.max()            
             else:
                 im0._alpha = 1
             cbar = self.fig.colorbar(im0, cax=ax_color, orientation='horizontal',
                               label=label, 
-                              norm=matplotlib.colors.Normalize(vmin=1, vmax=1)
+                              norm=matplotlib.colors.Normalize(vmin=1, vmax=1),
+                              ticks=[]
                               )
             cbar.set_label(label=label, fontsize=self.fontsize, labelpad=-self.labelpad)
             ax_color.set_xticks([])
+
             self.cbs.append(ax_color)
 
             # Read just the location of every colorbar
@@ -502,7 +505,8 @@ class SurveyStack(object):
             im0._alpha = 1
             cbar = self.fig.colorbar(im0, cax=ax_color, orientation='horizontal',
                               label=label, 
-                              norm=matplotlib.colors.Normalize(vmin=1, vmax=1)
+                              norm=matplotlib.colors.Normalize(vmin=1, vmax=1),
+                              ticks=[]
                               )
             cbar.set_label(label=label, fontsize=self.fontsize, labelpad=-self.labelpad)
             ax_color.set_xticks([])
@@ -588,6 +592,8 @@ class SurveyStack(object):
             self.mapview(hpx_map, title='', coord=coord,
                          cbar=True, fig=self.fig.number, cmap=cm1,
                          notext=True, flip='astro', **self.kwds)
+
+            #Last axes is colorbar that we want to delete
             self.fig.delaxes(self.fig.axes[-1])
 
             # First add the new colorbar axis to the figure
@@ -596,7 +602,8 @@ class SurveyStack(object):
             ax_color = pl.axes([len(self.cbs), box.y0-0.1, 0.05, 0.05])
             im0._alpha = 1
             cbar = self.fig.colorbar(im0, cax=ax_color, orientation='horizontal',  
-                              norm=matplotlib.colors.Normalize(vmin=1, vmax=1)
+                              norm=matplotlib.colors.Normalize(vmin=1, vmax=1),
+                              ticks=[]
                               )
             cbar.set_label(label=label, fontsize=self.fontsize, labelpad=-self.labelpad)
             ax_color.set_xticks([])
