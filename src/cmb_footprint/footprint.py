@@ -344,7 +344,7 @@ class SurveyStack(object):
                                 coord_in=coord, cbar=cbar, alpha=alpha)
 
     def superimpose_survey_outline(self, survey_name, color='red',
-                                   label=None, cbar=True):
+                                   label=None, cbar=True, **kwargs):
         '''Superimpose an outline of a survey
 
         Parameters
@@ -374,12 +374,13 @@ class SurveyStack(object):
         if isinstance(coord, list):
             for vtx1, coord1 in zip(vtxs[:-1], coord[:-1]):
                 self.superimpose_polygon_outline(vtx1, label, color=color,
-                                                 coord_in=coord1, cbar=False)
+                                                 coord_in=coord1, cbar=False,
+                                                 **kwargs)
             vtxs = vtxs[-1]
             coord = coord[-1]
 
-        self.superimpose_polygon_outline(vtxs, label, color=color,
-                                         coord_in=coord, cbar=cbar)
+        self.superimpose_polygon_outline(vtxs, label, color=color, coord_in=coord,
+                                         cbar=cbar, **kwargs)
 
     def superimpose_survey_contour(self, survey_name, color='red',
                                    label=None, frac=0.85, **kwds):
@@ -523,7 +524,7 @@ class SurveyStack(object):
                 left += 1.0 / ncb
 
     def superimpose_polygon_outline(self, vertices, label, color='red',
-                                    coord_in='C', cbar=True):
+                                    coord_in='C', cbar=True, **kwargs):
         '''Superimpose an outline of a survey given input vertices
 
         Parameters
@@ -540,7 +541,6 @@ class SurveyStack(object):
 
         coord_in : 'C', 'E', or 'G'
             The coordinate system for the input vertices
-
         cbar : boolean
             Whether to add a colorbar corresponding to this polygon or not
         '''
@@ -575,13 +575,14 @@ class SurveyStack(object):
         linelon = np.array([])
         linelat = np.array([])
         for i in range(nvertices-1):
-            tmplon = np.linspace(lons[i], lons[i+1], num=1000)
+            tmplon = np.linspace(0, (lons[i+1]-lons[i]+180)%360-180, num=1000)+lons[i]
+            # x = np.linspace(0, (xs[i + 1] - xs[i] + 180) % 360 - 180, 100) + xs[i]
             tmplat = np.linspace(lats[i], lats[i+1], num=1000)
             linelon = np.append(linelon, tmplon)
             linelat = np.append(linelat, tmplat)
 
-        H.projplot(linelon, linelat, lonlat=True, markersize=1,
-                   color=color, coord=coord_in)
+        H.projplot(linelon, linelat, lonlat=True, markersize=1, color=color,
+                   coord=coord_in, **kwargs)
 
         if cbar:
             # Temporary axis with a Healpix map so I can get the correct color
@@ -603,8 +604,7 @@ class SurveyStack(object):
             im0._alpha = 1
             cbar = self.fig.colorbar(im0, cax=ax_color, orientation='horizontal',  
                               norm=matplotlib.colors.Normalize(vmin=1, vmax=1),
-                              ticks=[]
-                              )
+                              ticks=[])
             cbar.set_label(label=label, fontsize=self.fontsize, labelpad=-self.labelpad)
             ax_color.set_xticks([])
             self.cbs.append(ax_color)

@@ -181,18 +181,18 @@ class ConfigHandler(object):
         coord = self.config.get(survey_name, 'coord')
 
         if get_unit:
-            hpx_map, header = H.read_map(fns[0], h=True)
+            hpx_map, header = H.read_map(fns[0], h=True, dtype=np.float32)
             header = dict(header)
             try:
                 unit = header['TUNIT1']
             except KeyError:
                 unit = None
         else:
-            hpx_map = H.read_map(fns[0])
+            hpx_map = H.read_map(fns[0], dtype=np.float32)
 
         nside = H.npix2nside(len(hpx_map))
         for fn_tmp in fns[1:]:
-            tmp_map = H.read_map(fn_tmp)
+            tmp_map = H.read_map(fn_tmp, dtype=np.float32)
             hpx_map += H.ud_grade(tmp_map, nside)
 
         if get_unit:
