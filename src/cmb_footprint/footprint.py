@@ -17,11 +17,13 @@ import inspect
 import numpy as np
 import pylab as pl
 import healpy as H
+import matplotlib
 import matplotlib.cm as cm
+from . import get_data_path
+from . import visufunc_ext as vf
+from . import util as util
+from .config_handler import ConfigHandler
 
-import cmb_footprint.visufunc_ext as vf
-import cmb_footprint.util as util
-from cmb_footprint.config_handler import ConfigHandler
 
 
 class SurveyStack(object):
@@ -32,15 +34,18 @@ class SurveyStack(object):
 
     def __init__(self, background, nside=None, fignum=None,
                  projection='mollweide', coord_bg='G', coord_plot='C',
-                 partialmap=False, config='footprint.cfg',
+                 partialmap=False, config=None,
                  map_path=None, download_config=False,
                  title='Survey Footprints', cbar=None, min=1.0,
-                 max=5000.0, log=True, unit='', **kwds):
+                 fontsize=10, labelpad=0,
+                 max=5000.0, log=True, unit='', **kwds, ):
 
         self.fig = pl.figure(fignum)
+        
         self.coord_plot = coord_plot
         self.partialmap = partialmap
-
+        self.fontsize = fontsize
+        self.labelpad = labelpad
         self.kwds = kwds
         self.cbs = []
 
@@ -58,17 +63,19 @@ class SurveyStack(object):
             self.mapcontour = vf.gnomcontour
 
         if map_path is None:
-            full_path = inspect.getfile(inspect.currentframe())
-            abs_path = os.path.split(full_path)[0]
-            map_path = os.path.join(abs_path, 'maps/')
-
+            map_path = get_data_path('maps/')
+        if config is None:
+            config = get_data_path('footprint.cfg')
+        else:
+            if ~os.path.exists(config):
+                raise FileNotFoundError(f"Not finding: {config}")
+        
         self.config = ConfigHandler(config, map_path, nside=nside,
                                     download_config=download_config)
-
+        
         # Could also just call load_survey which will call get_background
         if isinstance(background, str):
-            bgmap, coord_bg, unit2 = self.config.load_survey(background,
-                                                             get_unit=True)
+            bgmap, coord_bg, unit2 = self.config.load_survey(background, get_unit=True)
             background = bgmap[0]
             if unit2 is not None:
                 unit = unit2
@@ -104,9 +111,10 @@ class SurveyStack(object):
             if not cbar:
                 self.fig.delaxes(self.fig.axes[-1])
 
-        H.graticule(dpar=30.0, dmer=30.0, coord='C', verbose=False)
-
+        # H.graticule(dpar=30.0, dmer=30.0, coord='C', verbose=False)
+        
     def superimpose_hpxmap(self, hpx_map, label, color='red', coord_in='C',
+                           alpha=None, 
                            cbar=True):
         '''Superimpose a Healpix map on the background map.
 
@@ -121,7 +129,7 @@ class SurveyStack(object):
         color : string or array-like with shape (3,)
             The color to use when overlaying the survey footprint. Either a
             string or rgb triplet.
-
+        alpha: float=None
         coord_in : 'C', 'G', or 'E'
             The coordinate system of the input healpix map.
 
@@ -157,9 +165,8 @@ class SurveyStack(object):
         else:
             self.mapview(hpx_map, title='', coord=coord,
                          cbar=True, fig=self.fig.number, cmap=cm1,
-                         notext=True, flip='astro', **self.kwds)
-
-        #Last axis is colorbar
+                         notext=True, flip='astro', 
+                         alpha=alpha, **self.kwds)
         self.fig.delaxes(self.fig.axes[-1])
 
         if cbar:
@@ -167,10 +174,19 @@ class SurveyStack(object):
             im0 = self.fig.axes[-1].get_images()[0]
             box = self.fig.axes[0].get_position()
             ax_color = pl.axes([len(self.cbs), box.y0-0.1, 0.05, 0.05])
-            #self.fig.colorbar(im0, cax=ax_color, orientation='horizontal',
-            #                  label=label, values=[1, 1])
-            self.fig.colorbar(im0, cax=ax_color, orientation='horizontal',
-                              label=label, ticks=[])
+
+            if isinstance(im0._alpha, np.ndarray):
+                im0._alpha = im0._alpha.max()            
+            else:
+                im0._alpha = 1
+            cbar = self.fig.colorbar(im0, cax=ax_color, orientation='horizontal',
+                              label=label, 
+                              norm=matplotlib.colors.Normalize(vmin=1, vmax=1),
+                              ticks=[]
+                              )
+            cbar.set_label(label=label, fontsize=self.fontsize, labelpad=-self.labelpad)
+            ax_color.set_xticks([])
+
             self.cbs.append(ax_color)
 
             # Read just the location of every colorbar
@@ -298,7 +314,7 @@ class SurveyStack(object):
                                 coord_in=coord_in)
 
     def superimpose_survey(self, survey_name, color='red',
-                           label=None, cbar=True):
+                           label=None, cbar=True, alpha=None):
         '''Superimpose a specific survey whose Healpix footprints we have
         pregenerated and are listed in the configuration file
 
@@ -322,9 +338,10 @@ class SurveyStack(object):
 
         if label is None:
             label = survey_name
-
+        if alpha is not None:
+            alpha = np.full_like(hpx_map, alpha)
         self.superimpose_hpxmap(hpx_map, label, color=color,
-                                coord_in=coord, cbar=cbar)
+                                coord_in=coord, cbar=cbar, alpha=alpha)
 
     def superimpose_survey_outline(self, survey_name, color='red',
                                    label=None, cbar=True):
@@ -485,11 +502,14 @@ class SurveyStack(object):
             im0 = self.fig.axes[-1].get_images()[0]
             box = self.fig.axes[0].get_position()
             ax_color = pl.axes([len(self.cbs), box.y0-0.1, 0.05, 0.05])
-            #self.fig.colorbar(im0, cax=ax_color, orientation='horizontal',
-            #                  label=label, values=[1, 1])
-            self.fig.colorbar(im0, cax=ax_color, orientation='horizontal',
-                              label=label, ticks=[])
-
+            im0._alpha = 1
+            cbar = self.fig.colorbar(im0, cax=ax_color, orientation='horizontal',
+                              label=label, 
+                              norm=matplotlib.colors.Normalize(vmin=1, vmax=1),
+                              ticks=[]
+                              )
+            cbar.set_label(label=label, fontsize=self.fontsize, labelpad=-self.labelpad)
+            ax_color.set_xticks([])
             self.cbs.append(ax_color)
 
             self.fig.delaxes(self.fig.axes[-2])
@@ -580,11 +600,13 @@ class SurveyStack(object):
             im0 = self.fig.axes[-1].get_images()[0]
             box = self.fig.axes[0].get_position()
             ax_color = pl.axes([len(self.cbs), box.y0-0.1, 0.05, 0.05])
-            #self.fig.colorbar(im0, cax=ax_color, orientation='horizontal',
-            #                  label=label, values=[1, 1])
-            self.fig.colorbar(im0, cax=ax_color, orientation='horizontal',
-                              label=label, ticks=[])
-
+            im0._alpha = 1
+            cbar = self.fig.colorbar(im0, cax=ax_color, orientation='horizontal',  
+                              norm=matplotlib.colors.Normalize(vmin=1, vmax=1),
+                              ticks=[]
+                              )
+            cbar.set_label(label=label, fontsize=self.fontsize, labelpad=-self.labelpad)
+            ax_color.set_xticks([])
             self.cbs.append(ax_color)
 
             # Delete the temporary map

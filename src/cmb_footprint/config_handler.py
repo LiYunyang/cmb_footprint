@@ -13,12 +13,9 @@ generates or reads in healpix maps corresponding to survey footprints.
 from __future__ import print_function
 
 # For differing imports between Python2 and Python3
-try:
-    import ConfigParser
-    from urllib2 import urlopen
-except ImportError:
-    import configparser as ConfigParser
-    from urllib.request import urlopen
+
+import configparser 
+from urllib.request import urlopen
 
 import os
 import hashlib
@@ -27,7 +24,7 @@ import healpy as H
 import numpy as np
 from astropy.coordinates import SkyCoord
 
-import cmb_footprint.util as util
+from . import util
 
 
 class ConfigHandler(object):
@@ -38,7 +35,6 @@ class ConfigHandler(object):
                  check=True):
         self.config_fn = config_fn
         self.map_path = map_path
-
         if nside is None:
             nside = 256
 
@@ -47,7 +43,7 @@ class ConfigHandler(object):
         if download_config:
             self.get_config()
 
-        self.config = ConfigParser.ConfigParser()
+        self.config = configparser.ConfigParser()
         self.config.read(config_fn)
 
         if check:
@@ -236,7 +232,7 @@ class ConfigHandler(object):
             radec_point = 'vertex'+str(i)
             try:
                 radec_val = self.config.get(survey_name, radec_point)
-            except ConfigParser.NoOptionError:
+            except configparser.NoOptionError:
                 break
 
             lonlat_val = radec_val.split(',')
@@ -471,7 +467,7 @@ class ConfigHandler(object):
             radec_point = 'vertex'+str(i)
             try:
                 radec_val = self.config.get(survey_name, radec_point)
-            except ConfigParser.NoOptionError:
+            except configparser.NoOptionError:
                 break
 
             lonlat_val = radec_val.split(',')

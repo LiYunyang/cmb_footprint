@@ -7,11 +7,13 @@ import matplotlib
 # you can add this to your PYTHONPATH also
 import os
 import sys
+from cmb_footprint import footprint
+
 separator = os.sep
 fullpath = os.getcwd().split(separator)
 source_path = separator.join(fullpath[0:-2])
 sys.path.append(source_path)
-from cmb_footprint import footprint
+
 
 if __name__ == '__main__':
     fp = footprint.SurveyStack('PLANCK-DUSTPOL', fignum=1, projection='mollweide', coord_plot='C', rot=[0,0],

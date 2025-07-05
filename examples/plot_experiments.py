@@ -6,11 +6,14 @@ import healpy as H
 # you can add this to your PYTHONPATH also
 import os
 import sys
+from cmb_footprint import footprint
+
+
 separator = os.sep
 fullpath = os.getcwd().split(separator)
 source_path = separator.join(fullpath[0:-2])
 sys.path.append(source_path)
-from cmb_footprint import footprint
+
 
 if __name__ == '__main__':
 

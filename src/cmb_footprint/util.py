@@ -40,12 +40,7 @@ from scipy.sparse import coo_matrix
 import hashlib
 
 # For differing imports between Python2 and Python3
-try:
-    import ConfigParser
-    from urllib2 import urlopen
-except ImportError:
-    import configparser as ConfigParser
-    from urllib.request import urlopen
+from urllib.request import urlopen
 
 
 def wcs_to_healpix(hdulist, nside):
@@ -78,8 +73,7 @@ def wcs_to_healpix(hdulist, nside):
 
     print("x/ysize = ", data.shape[0], data.shape[1])
 
-    pixcrd = [(y, x) for x in xrange(data.shape[0]) for y in
-              xrange(data.shape[1])]
+    pixcrd = [(y, x) for x in range(data.shape[0]) for y in range(data.shape[1])]
 
 #   pix2world to get ra/dec values of each pixel
     world = wcs1.wcs_pix2world(pixcrd, 1)
