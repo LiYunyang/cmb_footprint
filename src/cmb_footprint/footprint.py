@@ -694,3 +694,92 @@ def determine_level(hpx_map, obs_frac, time=True):
             idx1 = idx2
         else:
             idx0 = idx2
+
+
+def superimpose_survey_outline(survey_name, color='red', coord_plot='C', **kwargs):
+    '''Superimpose an outline of a survey
+
+    Parameters
+    ----------
+    survey_name : string
+        The name of the survey in the configuration file
+
+    color : string or array-like with shape (3,), optional
+        The color to use when overlaying the survey footprint. Either a
+        string or rgb triplet. Default = 'red'
+
+    label : string, optional
+        The name to use when labeling this survey on the footprint.
+        If not input, we will use the survey name.
+
+    Notes
+    -----
+    This function is for survey footprints that are defined in the
+    configuration file as opposed loading a healpix map
+    '''
+    config = get_data_path('footprint.cfg')
+    config = ConfigHandler(config, map_path=None, check=False)
+    vtxs, coord = config.load_survey_outline(survey_name)
+
+    if isinstance(coord, list):
+        for vtx1, coord1 in zip(vtxs[:-1], coord[:-1]):
+            superimpose_polygon_outline(vtx1, coord_plot=coord_plot, color=color, coord_in=coord1, **kwargs)
+        vtxs = vtxs[-1]
+        coord = coord[-1]
+    superimpose_polygon_outline(vtxs, coord_plot=coord_plot, color=color, coord_in=coord, **kwargs)
+
+
+def superimpose_polygon_outline(vertices, coord_plot='C', color='red', coord_in='C', **kwargs):
+    """Superimpose an outline of a survey given input vertices
+
+    Parameters
+    ----------
+    vertices: array-like (nvtxs, 2)
+        The vertices of the polygon
+    color : string or array-like with shape (3,)
+        The color to use when overlaying the survey footprint. Either a
+        string or rgb triplet.
+
+    coord_in : 'C', 'E', or 'G'
+        The coordinate system for the input vertices
+    cbar : boolean
+        Whether to add a colorbar corresponding to this polygon or not
+    """
+
+    lons = vertices[:, 0]
+    lats = vertices[:, 1]
+
+    if np.abs(lons[-1] - 180.0) > 0.01:
+        lons = np.append(lons, lons[0])
+        lats = np.append(lats, lats[0])
+
+    # Convert coordinate system for the outline to the one used in the
+    # plot
+    r = H.rotator.Rotator(coord=[coord_in, coord_plot])
+    r = H.rotator.Rotator(coord=[coord_in, coord_in])
+    lonsp = []
+    latsp = []
+    for lon, lat in zip(lons, lats):
+        theta = np.radians(90 - lat)
+        phi = np.radians(lon)
+        thetap, phip = r(theta, phi)
+        lonsp.append(np.degrees(phip))
+        latsp.append(90 - np.degrees(thetap))
+
+    lons = lonsp
+    lats = latsp
+
+    nvertices = len(lons)
+
+    # Loop over all vertices and generate lines between adjacent vertices
+    # in list. This is to ensure the lines are drawn.
+    linelon = np.array([])
+    linelat = np.array([])
+    for i in range(nvertices - 1):
+        tmplon = np.linspace(0, (lons[i + 1] - lons[i] + 180) % 360 - 180, num=1000) + lons[i]
+        # x = np.linspace(0, (xs[i + 1] - xs[i] + 180) % 360 - 180, 100) + xs[i]
+        tmplat = np.linspace(lats[i], lats[i + 1], num=1000)
+        linelon = np.append(linelon, tmplon)
+        linelat = np.append(linelat, tmplat)
+
+    H.projplot(linelon, linelat, lonlat=True, markersize=1, color=color, coord=coord_in, **kwargs)
