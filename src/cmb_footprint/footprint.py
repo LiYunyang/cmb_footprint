@@ -783,3 +783,28 @@ def superimpose_polygon_outline(vertices, coord_plot='C', color='red', coord_in=
         linelat = np.append(linelat, tmplat)
 
     H.projplot(linelon, linelat, lonlat=True, markersize=1, color=color, coord=coord_in, **kwargs)
+
+
+
+
+def load_config():
+    config = ConfigHandler(get_data_path('footprint.cfg'),
+                           map_path=get_data_path('maps/'),check=False)
+
+    config.keys = config.config.__dict__['_sections'].keys()
+    return config
+
+
+def outline_fields(key, num=100, **kwargs):
+    import healpy as hp
+    config = load_config()
+    verts = config.load_survey_outline(key)[0]
+    if isinstance(verts, np.ndarray):
+        verts = [verts]
+    for vert in verts:
+        v1 = vert
+        v2 = np.vstack([vert[1:], vert[0]])
+        for (s1, s2) in zip(v1, v2):
+            x = np.linspace(0, (s2[0] - s1[0] + 180) % 360 - 180, num=num)
+            y = np.linspace(s1[1], s2[1], num)
+            hp.projplot(x+s1[0], y, **kwargs, lonlat=True)
